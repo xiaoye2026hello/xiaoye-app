@@ -9,7 +9,7 @@ export default function App() {
     <View style={styles.container}>
       <StatusBar style="light" />
 
-      <Text style={styles.title}>Hello</Text>
+      <Text style={styles.title}>小叶软件</Text>
       <Text style={styles.subtitle}>能看到这一行，说明链路通了</Text>
 
       <View style={styles.card}>
@@ -45,10 +45,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   title: {
-    fontSize: 44,
+    fontSize: 38,
     fontWeight: '500',
     color: '#EAF2FF',
-    letterSpacing: 1,
+    letterSpacing: 2,
   },
   subtitle: {
     marginTop: 10,

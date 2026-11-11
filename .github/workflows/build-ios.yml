@@ -37,11 +37,11 @@ jobs:
         run: |
           cd ios
           echo "== all schemes in workspace =="
-          xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[]'
-          SCHEME=$(node -p "require('../app.json').expo.name")
-          if ! xcodebuild -workspace *.xcworkspace -list | sed -n '/Schemes:/,$p' | grep -qx "[[:space:]]*$SCHEME"; then
-            echo "app.json name [$SCHEME] not found in workspace, falling back"
-            SCHEME=$(xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[]' | grep -v -E '^(boost|Pods)' | head -1)
+          ALL=$(xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[]')
+          echo "$ALL"
+          SCHEME=$(echo "$ALL" | grep -v -E '^(boost|Pods|React|RCT|Expo|Yoga|hermes|DoubleConversion|glog|fmt)' | head -1)
+          if [ -z "$SCHEME" ]; then
+            SCHEME=$(echo "$ALL" | head -1)
           fi
           echo "using scheme: $SCHEME"
           echo "name=$SCHEME" >> "$GITHUB_OUTPUT"
