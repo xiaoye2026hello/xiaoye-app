@@ -36,8 +36,14 @@ jobs:
         id: scheme
         run: |
           cd ios
-          SCHEME=$(xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[0]')
-          echo "scheme resolved: $SCHEME"
+          echo "== all schemes in workspace =="
+          xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[]'
+          SCHEME=$(node -p "require('../app.json').expo.name")
+          if ! xcodebuild -workspace *.xcworkspace -list | sed -n '/Schemes:/,$p' | grep -qx "[[:space:]]*$SCHEME"; then
+            echo "app.json name [$SCHEME] not found in workspace, falling back"
+            SCHEME=$(xcodebuild -workspace *.xcworkspace -list -json | jq -r '.workspace.schemes[]' | grep -v -E '^(boost|Pods)' | head -1)
+          fi
+          echo "using scheme: $SCHEME"
           echo "name=$SCHEME" >> "$GITHUB_OUTPUT"
 
       - name: Build without code signing
@@ -56,8 +62,15 @@ jobs:
 
       - name: Package into ipa
         run: |
+          APP=$(ls -d ios/build/Build/Products/Release-iphoneos/*.app 2>/dev/null | head -1)
+          if [ -z "$APP" ]; then
+            echo "::error::no .app bundle produced, dumping build products:"
+            ls -R ios/build/Build/Products/ || true
+            exit 1
+          fi
+          echo "app bundle: $APP"
           mkdir -p Payload
-          cp -R ios/build/Build/Products/Release-iphoneos/*.app Payload/
+          cp -R "$APP" Payload/
           zip -ry Hello-unsigned.ipa Payload
           ls -lh Hello-unsigned.ipa
 
