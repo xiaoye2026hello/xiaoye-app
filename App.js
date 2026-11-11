@@ -2,6 +2,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
+const FONT = Platform.select({
+  ios: 'PingFang SC',
+  android: 'sans-serif',
+  default: 'sans-serif',
+});
+
 export default function App() {
   const [count, setCount] = useState(0);
 
@@ -45,15 +51,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   title: {
-    fontSize: 38,
+    fontFamily: FONT,
     fontWeight: '500',
+    fontSize: 38,
     color: '#EAF2FF',
     letterSpacing: 2,
+    fontStyle: 'normal',
   },
   subtitle: {
+    fontFamily: FONT,
     marginTop: 10,
     fontSize: 14,
     color: '#7E8CA0',
+    fontStyle: 'normal',
   },
   card: {
     marginTop: 40,
@@ -74,13 +84,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#25324A',
   },
   label: {
+    fontFamily: FONT,
     fontSize: 14,
     color: '#7E8CA0',
+    fontStyle: 'normal',
   },
   value: {
+    fontFamily: FONT,
     fontSize: 14,
     color: '#EAF2FF',
-    fontVariant: ['tabular-nums'],
+    fontVariant: ['tabular-nums', 'lining-nums'],
+    fontStyle: 'normal',
   },
   button: {
     marginTop: 36,
@@ -94,13 +108,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#2454CC',
   },
   buttonText: {
-    fontSize: 17,
+    fontFamily: FONT,
     fontWeight: '500',
+    fontSize: 17,
     color: '#FFFFFF',
+    fontStyle: 'normal',
   },
   hint: {
+    fontFamily: FONT,
     marginTop: 16,
     fontSize: 12,
     color: '#5A6779',
+    fontStyle: 'normal',
   },
 });
