@@ -115,38 +115,15 @@ function HomeScreen({ width }) {
   );
 }
 
-function AppsScreen({ width }) {
-  const pad = 16;
-  const rowH = Math.round(Math.min(width * 0.22, 92));
-  const iconSize = Math.round(rowH * 0.62);
-
+function AppsScreen() {
   return (
     <View style={styles.flex}>
-      <View style={[styles.catBar, { paddingHorizontal: pad }]}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={[styles.catChip, styles.catChipOn]}>
-            <Text style={styles.catTextOn}>实用软件</Text>
-          </View>
-          <View style={styles.catChip} />
-          <View style={styles.catChip} />
-        </ScrollView>
+      <View style={styles.catBar}>
+        <View style={[styles.catChip, styles.catChipOn]}>
+          <Text style={styles.catTextOn}>实用软件</Text>
+        </View>
       </View>
-
-      <ScrollView
-        contentContainerStyle={[styles.listContent, { paddingHorizontal: pad }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-          <View key={i} style={[styles.appRow, { height: rowH }]}>
-            <View
-              style={[
-                styles.appIcon,
-                { width: iconSize, height: iconSize, borderRadius: iconSize * 0.24 },
-              ]}
-            />
-          </View>
-        ))}
-      </ScrollView>
+      <View style={styles.blank} />
     </View>
   );
 }
@@ -187,7 +164,7 @@ export default function App() {
 
       <View style={styles.sheet}>
         {tab === 'home' && <HomeScreen width={width} />}
-        {tab === 'apps' && <AppsScreen width={width} />}
+        {tab === 'apps' && <AppsScreen />}
         {(tab === 'find' || tab === 'more') && <BlankScreen />}
       </View>
 
@@ -389,6 +366,8 @@ const styles = StyleSheet.create({
   catBar: {
     paddingTop: 14,
     paddingBottom: 10,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
   },
   catChip: {
     height: 30,
