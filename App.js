@@ -1,11 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
+  Linking,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -25,11 +28,23 @@ const PH = '#EDF1F6';
 const PH_LINE = '#DCE3EC';
 
 const TABS = [
-  { id: 'home', name: '首页', icon: 'home', sub: '欢迎使用小叶软件库，发现好用的工具！' },
+  { id: 'home', name: '首页', icon: 'home', sub: '欢迎来到小叶软件库！' },
   { id: 'apps', name: '软件', icon: 'box', sub: '↓↓【不显示软件请下拉进行刷新】↓↓' },
   { id: 'find', name: '发现', icon: 'compass', sub: '' },
   { id: 'more', name: '更多', icon: 'more', sub: '' },
 ];
+
+const CATS = [{ id: 'all', name: '全部' }];
+
+const CAT_COLOR = {
+  efficiency: '#2F9CF7',
+  dev: '#7C5CFF',
+  design: '#E8608C',
+  system: '#2FBFA8',
+  media: '#F5A524',
+};
+
+const APPS = [];
 
 function TabIcon({ type, color }) {
   if (type === 'home') {
@@ -115,15 +130,151 @@ function HomeScreen({ width }) {
   );
 }
 
-function AppsScreen() {
+function AppRow({ item, width, onGet }) {
+  const color = CAT_COLOR[item.cat] || BLUE;
+  const rowH = Math.round(Math.min(width * 0.21, 88));
+  const iconSize = Math.round(rowH * 0.6);
+
+  return (
+    <View style={[styles.appRow, { height: rowH }]}>
+      <View
+        style={[
+          styles.appIcon,
+          {
+            width: iconSize,
+            height: iconSize,
+            borderRadius: iconSize * 0.26,
+            backgroundColor: color + '1F',
+          },
+        ]}
+      >
+        <Text style={[styles.appIconText, { color, fontSize: iconSize * 0.42 }]}>
+          {item.name.charAt(0)}
+        </Text>
+      </View>
+
+      <View style={styles.appInfo}>
+        <Text style={styles.appName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.appDesc} numberOfLines={1}>
+          {item.desc}
+        </Text>
+      </View>
+
+      <Pressable
+        onPress={() => onGet(item)}
+        style={({ pressed }) => [styles.getBtn, pressed && styles.getBtnPressed]}
+      >
+        <Text style={styles.getBtnText}>获取</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function AppsScreen({ width, keyword, cat, onCatChange, onRefresh, refreshing, onGet }) {
+  const list = useMemo(() => {
+    const kw = keyword.trim().toLowerCase();
+    return APPS.filter((a) => {
+      const okCat = cat === 'all' || a.cat === cat;
+      const okKw = !kw || a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw);
+      return okCat && okKw;
+    });
+  }, [keyword, cat]);
+
   return (
     <View style={styles.flex}>
       <View style={styles.catBar}>
-        <View style={[styles.catChip, styles.catChipOn]}>
-          <Text style={styles.catTextOn}>实用软件</Text>
-        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {CATS.map((c) => {
+            const on = c.id === cat;
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => onCatChange(c.id)}
+                style={[styles.catChip, on && styles.catChipOn]}
+              >
+                <Text style={[styles.catText, on && styles.catTextOn]}>{c.name}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </View>
-      <View style={styles.blank} />
+
+      <ScrollView
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={BLUE}
+            colors={[BLUE]}
+          />
+        }
+      >
+        {list.map((item) => (
+          <AppRow key={item.name} item={item} width={width} onGet={onGet} />
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function HistoryScreen({ list, onBack, width }) {
+  return (
+    <View style={styles.flex}>
+      <View style={styles.historyBar}>
+        <Pressable onPress={onBack} hitSlop={12} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ 返回</Text>
+        </Pressable>
+        <Text style={styles.historyCount}>{list.length} 条</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.listContent} showsVerticalScrollIndicator={false}>
+        {list.length === 0 ? (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>还没有下载记录</Text>
+            <Text style={styles.emptyHint}>点软件右侧的「获取」会记录在这里</Text>
+          </View>
+        ) : (
+          list.map((item) => {
+            const color = CAT_COLOR[item.cat] || BLUE;
+            const rowH = Math.round(Math.min(width * 0.21, 88));
+            const iconSize = Math.round(rowH * 0.6);
+            return (
+              <View key={item.name} style={[styles.appRow, { height: rowH }]}>
+                <View
+                  style={[
+                    styles.appIcon,
+                    {
+                      width: iconSize,
+                      height: iconSize,
+                      borderRadius: iconSize * 0.26,
+                      backgroundColor: color + '1F',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.appIconText, { color, fontSize: iconSize * 0.42 }]}>
+                    {item.name.charAt(0)}
+                  </Text>
+                </View>
+                <View style={styles.appInfo}>
+                  <Text style={styles.appName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  <Text style={styles.appDesc} numberOfLines={1}>
+                    {item.desc}
+                  </Text>
+                </View>
+                <View style={styles.doneTag}>
+                  <Text style={styles.doneTagText}>已获取</Text>
+                </View>
+              </View>
+            );
+          })
+        )}
+      </ScrollView>
     </View>
   );
 }
@@ -133,9 +284,42 @@ function BlankScreen() {
 }
 
 export default function App() {
-  const [tab, setTab] = useState('home');
+  const [tab, setTab] = useState(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hash) {
+      const h = window.location.hash.replace('#', '');
+      if (TABS.some((t) => t.id === h)) return h;
+    }
+    return 'home';
+  });
+  const [searching, setSearching] = useState(false);
+  const [keyword, setKeyword] = useState('');
+  const [cat, setCat] = useState('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState([]);
   const { width } = useWindowDimensions();
   const current = TABS.find((t) => t.id === tab);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 900);
+  };
+
+  const closeSearch = () => {
+    setSearching(false);
+    setKeyword('');
+  };
+
+  const handleGet = (item) => {
+    setHistory((prev) => {
+      const rest = prev.filter((x) => x.name !== item.name);
+      return [{ ...item, at: Date.now() }, ...rest];
+    });
+    Linking.openURL(item.url).catch(() => {});
+  };
+
+  const headerTitle = tab === 'apps' && showHistory ? '下载记录' : current.name;
+  const headerSub = tab === 'apps' && showHistory ? '点过「获取」的软件会记在这里' : current.sub;
 
   return (
     <View style={styles.root}>
@@ -148,23 +332,70 @@ export default function App() {
             <View style={styles.deco2} />
           </>
         )}
-        <Text style={styles.headerTitle}>{current.name}</Text>
-        {!!current.sub && <Text style={styles.headerSub}>{current.sub}</Text>}
-        {tab === 'apps' && (
-          <View style={styles.headerIcons}>
-            <Pressable hitSlop={10} style={styles.headerIconBtn}>
-              <SearchIcon />
-            </Pressable>
-            <Pressable hitSlop={10} style={styles.headerIconBtn}>
-              <DownloadIcon />
+
+        {searching ? (
+          <View style={styles.searchRow}>
+            <View style={styles.searchField}>
+              <TextInput
+                style={styles.searchInput}
+                value={keyword}
+                onChangeText={setKeyword}
+                placeholder="搜索软件名称"
+                placeholderTextColor="rgba(255,255,255,0.65)"
+                returnKeyType="search"
+                autoFocus
+              />
+            </View>
+            <Pressable onPress={closeSearch} hitSlop={10} style={styles.cancelBtn}>
+              <Text style={styles.cancelText}>取消</Text>
             </Pressable>
           </View>
+        ) : (
+          <>
+            <Text style={styles.headerTitle}>{headerTitle}</Text>
+            {!!headerSub && <Text style={styles.headerSub}>{headerSub}</Text>}
+            {tab === 'apps' && !showHistory && (
+              <View style={styles.headerIcons}>
+                <Pressable
+                  hitSlop={10}
+                  style={styles.headerIconBtn}
+                  onPress={() => setSearching(true)}
+                >
+                  <SearchIcon />
+                </Pressable>
+                <Pressable
+                  hitSlop={10}
+                  style={styles.headerIconBtn}
+                  onPress={() => setShowHistory(true)}
+                >
+                  <DownloadIcon />
+                </Pressable>
+              </View>
+            )}
+          </>
         )}
       </View>
 
       <View style={styles.sheet}>
         {tab === 'home' && <HomeScreen width={width} />}
-        {tab === 'apps' && <AppsScreen />}
+        {tab === 'apps' && !showHistory && (
+          <AppsScreen
+            width={width}
+            keyword={keyword}
+            cat={cat}
+            onCatChange={setCat}
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+            onGet={handleGet}
+          />
+        )}
+        {tab === 'apps' && showHistory && (
+          <HistoryScreen
+            list={history}
+            width={width}
+            onBack={() => setShowHistory(false)}
+          />
+        )}
         {(tab === 'find' || tab === 'more') && <BlankScreen />}
       </View>
 
@@ -173,7 +404,15 @@ export default function App() {
           const on = t.id === tab;
           const color = on ? BLUE : GRAY;
           return (
-            <Pressable key={t.id} style={styles.tabItem} onPress={() => setTab(t.id)}>
+            <Pressable
+              key={t.id}
+              style={styles.tabItem}
+              onPress={() => {
+                setTab(t.id);
+                setShowHistory(false);
+                if (t.id !== 'apps') closeSearch();
+              }}
+            >
               <TabIcon type={t.icon} color={color} />
               <Text style={[styles.tabLabel, { color }]}>{t.name}</Text>
             </Pressable>
@@ -241,6 +480,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  searchField: {
+    flex: 1,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  searchInput: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 15,
+    color: '#FFFFFF',
+    padding: 0,
+    outlineStyle: 'none',
+  },
+  cancelBtn: {
+    paddingLeft: 14,
+    paddingVertical: 10,
+  },
+  cancelText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 14.5,
+    color: '#FFFFFF',
+  },
   searchBox: { width: 26, height: 26 },
   searchRing: {
     position: 'absolute',
@@ -307,10 +576,15 @@ const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   ph: {
-    backgroundColor: PH,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     borderWidth: 1,
-    borderColor: PH_LINE,
-    borderRadius: 10,
+    borderColor: 'rgba(47,156,247,0.10)',
+    borderRadius: 12,
+    shadowColor: '#2F9CF7',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   notice: {
     flexDirection: 'row',
@@ -365,32 +639,36 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   catBar: {
-    paddingTop: 14,
-    paddingBottom: 10,
+    paddingTop: 16,
+    paddingBottom: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',
   },
   catChip: {
     height: 30,
-    minWidth: 58,
+    paddingHorizontal: 14,
     borderRadius: 8,
     marginRight: 8,
     backgroundColor: '#F1F4F8',
-  },
-  catChipOn: {
-    backgroundColor: BLUE,
-    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  catTextOn: {
+  catChipOn: {
+    backgroundColor: BLUE,
+  },
+  catText: {
     fontFamily: FONT,
     fontStyle: 'normal',
     fontSize: 12.5,
+    color: SUB,
+  },
+  catTextOn: {
     color: '#FFFFFF',
     fontWeight: '500',
   },
   listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
     paddingBottom: 20,
   },
   appRow: {
@@ -402,9 +680,102 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   appIcon: {
-    backgroundColor: PH,
-    borderWidth: 1,
-    borderColor: PH_LINE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  appIconText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontWeight: '500',
+  },
+  appInfo: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  appName: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 15,
+    fontWeight: '500',
+    color: INK,
+  },
+  appDesc: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    marginTop: 4,
+    fontSize: 12,
+    color: SUB,
+  },
+  getBtn: {
+    backgroundColor: BLUE,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  getBtnPressed: {
+    backgroundColor: '#1E86E0',
+  },
+  getBtnText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12.5,
+    fontWeight: '500',
+    color: '#FFFFFF',
+  },
+  empty: {
+    paddingTop: 80,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 13,
+    color: '#A9B4C2',
+  },
+  emptyHint: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    marginTop: 8,
+    fontSize: 12,
+    color: '#C3CBD6',
+  },
+  historyBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 6,
+  },
+  backBtn: {
+    paddingVertical: 4,
+    paddingRight: 8,
+  },
+  backText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 14,
+    color: BLUE,
+  },
+  historyCount: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12,
+    color: GRAY,
+  },
+  doneTag: {
+    backgroundColor: '#EAF7F1',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  doneTagText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12,
+    color: '#22A06B',
+    fontWeight: '500',
   },
   blank: {
     flex: 1,
