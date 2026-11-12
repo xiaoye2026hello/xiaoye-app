@@ -8,99 +8,129 @@ const FONT = Platform.select({
   default: 'sans-serif',
 });
 
-const C = {
-  bg: '#0B1220',
-  card: '#141E30',
-  border: '#1E2A3D',
-  text: '#EAF2FF',
-  sub: '#8B99AC',
-  mute: '#5A6779',
-};
+const BLUE = '#2F9CF7';
+const BLUE_SOFT = '#E8F3FF';
+const GRAY = '#9AA5B1';
+const INK = '#1A1A1A';
+const SUB = '#6B7684';
+const PH = '#EDF1F6';
+const PH_LINE = '#DCE3EC';
 
-const CATEGORIES = [
-  { id: 'all', name: '全部', color: '#8B99AC' },
-  { id: 'efficiency', name: '效率', color: '#2F6BFF' },
-  { id: 'dev', name: '开发', color: '#7C5CFF' },
-  { id: 'design', name: '设计', color: '#E8608C' },
-  { id: 'system', name: '系统', color: '#2FBFA8' },
+const TABS = [
+  { id: 'home', name: '首页', icon: 'home' },
+  { id: 'apps', name: '软件', icon: 'box' },
+  { id: 'find', name: '发现', icon: 'compass' },
+  { id: 'more', name: '更多', icon: 'more' },
 ];
 
-const CAT_MAP = Object.fromEntries(CATEGORIES.map((c) => [c.id, c]));
-
-const APPS = [
-  { name: 'Notion', cat: 'efficiency', desc: '文档、表格、项目看板合一', tags: ['笔记', '协作'] },
-  { name: 'Obsidian', cat: 'efficiency', desc: '本地优先的 Markdown 知识库', tags: ['笔记', '离线'] },
-  { name: 'Raycast', cat: 'efficiency', desc: '键盘唤起一切的启动器', tags: ['启动器'] },
-  { name: 'Cubox', cat: 'efficiency', desc: '收藏网页并永久保存内容', tags: ['收藏', '阅读'] },
-  { name: 'VS Code', cat: 'dev', desc: '可扩展的代码编辑器', tags: ['编辑器'] },
-  { name: 'Warp', cat: 'dev', desc: '重新设计的现代终端', tags: ['终端'] },
-  { name: 'Postman', cat: 'dev', desc: '接口调试与文档协作', tags: ['API'] },
-  { name: 'Docker', cat: 'dev', desc: '把运行环境打包带走', tags: ['容器'] },
-  { name: 'Figma', cat: 'design', desc: '多人同时编辑的界面设计工具', tags: ['UI', '协作'] },
-  { name: 'Affinity', cat: 'design', desc: '一次买断的图像处理套件', tags: ['修图'] },
-  { name: 'Blender', cat: 'design', desc: '从建模到渲染的完整三维管线', tags: ['3D'] },
-  { name: 'Rectangle', cat: 'system', desc: '用快捷键把窗口摆到固定位置', tags: ['窗口'] },
-  { name: 'Maccy', cat: 'system', desc: '轻量的剪贴板历史记录', tags: ['剪贴板'] },
-  { name: 'Keka', cat: 'system', desc: '支持多种格式的压缩解压工具', tags: ['压缩'] },
-];
-
-function AppCard({ item }) {
-  const c = CAT_MAP[item.cat];
+function ShareIcon() {
   return (
-    <Pressable style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}>
-      <View style={[styles.avatar, { backgroundColor: c.color + '26' }]}>
-        <Text style={[styles.avatarText, { color: c.color }]}>{item.name.charAt(0)}</Text>
+    <View style={styles.shareIcon}>
+      <View style={styles.shareArrow} />
+      <View style={styles.shareStem} />
+      <View style={styles.shareTray} />
+    </View>
+  );
+}
+
+function TabIcon({ type, color }) {
+  if (type === 'home') {
+    return (
+      <View style={styles.iconHome}>
+        <View style={[styles.homeRoof, { borderBottomColor: color }]} />
+        <View style={[styles.homeBody, { borderColor: color }]} />
       </View>
-      <Text style={styles.cardTitle} numberOfLines={1}>{item.name}</Text>
-      <Text style={styles.cardDesc} numberOfLines={2}>{item.desc}</Text>
-      <View style={styles.tagRow}>
-        {item.tags.map((t) => (
-          <View key={t} style={styles.tag}>
-            <Text style={styles.tagText}>{t}</Text>
-          </View>
-        ))}
+    );
+  }
+  if (type === 'box') {
+    return (
+      <View style={[styles.iconSquare, { borderColor: color }]}>
+        <View style={[styles.boxInner, { backgroundColor: color }]} />
       </View>
-    </Pressable>
+    );
+  }
+  if (type === 'compass') {
+    return (
+      <View style={[styles.iconCircle, { borderColor: color }]}>
+        <View style={[styles.compassDot, { backgroundColor: color }]} />
+      </View>
+    );
+  }
+  return (
+    <View style={styles.iconMore}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={[styles.moreDot, { backgroundColor: color }]} />
+      ))}
+    </View>
+  );
+}
+
+function Placeholder({ height, label }) {
+  return (
+    <View style={[styles.ph, { height }]}>
+      <Text style={styles.phLabel}>{label}</Text>
+    </View>
   );
 }
 
 export default function App() {
-  const [active, setActive] = useState('all');
-  const list = active === 'all' ? APPS : APPS.filter((a) => a.cat === active);
+  const [tab, setTab] = useState('home');
 
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.title}>软件库</Text>
-        <Text style={styles.subtitle}>精选 {APPS.length} 款实用工具</Text>
 
-        <View style={styles.filterRow}>
-          {CATEGORIES.map((c) => {
-            const on = c.id === active;
-            return (
-              <Pressable
-                key={c.id}
-                onPress={() => setActive(c.id)}
-                style={[styles.chip, on && { backgroundColor: c.color, borderColor: c.color }]}
-              >
-                <Text style={[styles.chipText, on && styles.chipTextOn]}>{c.name}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+      <View style={styles.header}>
+        <View style={styles.deco1} />
+        <View style={styles.deco2} />
+        <Text style={styles.headerTitle}>首页</Text>
+        <Text style={styles.headerSub}>欢迎使用小七软件库，点击右上角可分享软件！</Text>
+        <Pressable style={styles.shareWrap} hitSlop={10}>
+          <ShareIcon />
+        </Pressable>
+      </View>
 
-        <Text style={styles.count}>{list.length} 个结果</Text>
+      <View style={styles.sheet}>
+        <ScrollView
+          contentContainerStyle={styles.sheetContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <Placeholder height={180} label="Banner 图" />
 
-        <View style={styles.grid}>
-          {list.map((item) => (
-            <AppCard key={item.name} item={item} />
-          ))}
-        </View>
-      </ScrollView>
+          <View style={styles.notice}>
+            <View style={styles.noticeTag}>
+              <Text style={styles.noticeTagText}>公告</Text>
+            </View>
+            <Text style={styles.noticeText} numberOfLines={1}>
+              此处为公告内容，待填写
+            </Text>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+
+          <Text style={styles.sectionTitle}>公告专区</Text>
+
+          <View style={styles.grid}>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+              <View key={i} style={styles.tile}>
+                <Placeholder height={104} label="" />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      <View style={styles.tabbar}>
+        {TABS.map((t) => {
+          const on = t.id === tab;
+          const color = on ? BLUE : GRAY;
+          return (
+            <Pressable key={t.id} style={styles.tabItem} onPress={() => setTab(t.id)}>
+              <TabIcon type={t.icon} color={color} />
+              <Text style={[styles.tabLabel, { color }]}>{t.name}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -108,123 +138,258 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: C.bg,
+    backgroundColor: BLUE,
   },
-  scroll: {
-    paddingTop: 72,
+  header: {
+    backgroundColor: BLUE,
+    paddingTop: Platform.select({ ios: 62, android: 42, default: 42 }),
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 56,
   },
-  title: {
+  deco1: {
+    position: 'absolute',
+    top: 46,
+    right: 34,
+    width: 26,
+    height: 26,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  deco2: {
+    position: 'absolute',
+    top: 84,
+    right: 72,
+    width: 16,
+    height: 16,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+  },
+  headerTitle: {
     fontFamily: FONT,
     fontStyle: 'normal',
-    fontSize: 34,
+    fontSize: 28,
     fontWeight: '500',
-    color: C.text,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
-  subtitle: {
+  headerSub: {
     fontFamily: FONT,
     fontStyle: 'normal',
-    marginTop: 6,
-    fontSize: 14,
-    color: C.sub,
+    marginTop: 8,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.92)',
+    lineHeight: 19,
+    paddingRight: 60,
   },
-  filterRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 24,
-    gap: 8,
+  shareWrap: {
+    position: 'absolute',
+    right: 18,
+    top: Platform.select({ ios: 54, android: 34, default: 34 }),
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  chip: {
+  shareIcon: {
+    width: 20,
+    height: 20,
+  },
+  shareArrow: {
+    position: 'absolute',
+    top: 0,
+    left: 5,
+    width: 0,
+    height: 0,
+    borderLeftWidth: 5,
+    borderRightWidth: 5,
+    borderBottomWidth: 6,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderBottomColor: '#FFFFFF',
+  },
+  shareStem: {
+    position: 'absolute',
+    top: 5,
+    left: 9,
+    width: 2,
+    height: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  shareTray: {
+    position: 'absolute',
+    bottom: 0,
+    left: 2,
+    width: 16,
+    height: 9,
+    borderWidth: 2,
+    borderTopWidth: 0,
+    borderColor: '#FFFFFF',
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  sheet: {
+    flex: 1,
+    marginTop: -32,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    overflow: 'hidden',
+  },
+  sheetContent: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: C.border,
-    backgroundColor: C.card,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
-  chipText: {
+  ph: {
+    backgroundColor: PH,
+    borderWidth: 1,
+    borderColor: PH_LINE,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phLabel: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12,
+    color: '#A9B4C2',
+  },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EEF1F5',
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  noticeTag: {
+    backgroundColor: BLUE_SOFT,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginRight: 10,
+  },
+  noticeTagText: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12,
+    color: BLUE,
+    fontWeight: '500',
+  },
+  noticeText: {
+    flex: 1,
     fontFamily: FONT,
     fontStyle: 'normal',
     fontSize: 13,
-    color: C.sub,
+    color: SUB,
   },
-  chipTextOn: {
-    color: '#FFFFFF',
-    fontWeight: '500',
+  chevron: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 18,
+    color: '#C3CBD6',
+    marginLeft: 6,
   },
-  count: {
+  sectionTitle: {
     fontFamily: FONT,
     fontStyle: 'normal',
     marginTop: 22,
-    fontSize: 12,
-    color: C.mute,
+    marginBottom: 12,
+    fontSize: 17,
+    fontWeight: '500',
+    color: INK,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginTop: 12,
   },
-  card: {
-    width: '48%',
-    backgroundColor: C.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: C.border,
-    padding: 14,
+  tile: {
+    width: '48.5%',
     marginBottom: 12,
   },
-  cardPressed: {
-    backgroundColor: '#1A2740',
+  tabbar: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2F5',
+    paddingTop: 8,
+    paddingBottom: Platform.select({ ios: 24, android: 10, default: 10 }),
   },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  tabItem: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    paddingVertical: 4,
   },
-  avatarText: {
+  tabLabel: {
     fontFamily: FONT,
     fontStyle: 'normal',
-    fontSize: 20,
-    fontWeight: '500',
+    marginTop: 4,
+    fontSize: 10.5,
   },
-  cardTitle: {
-    fontFamily: FONT,
-    fontStyle: 'normal',
-    fontSize: 15,
-    fontWeight: '500',
-    color: C.text,
+  iconHome: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  cardDesc: {
-    fontFamily: FONT,
-    fontStyle: 'normal',
-    marginTop: 6,
-    fontSize: 12,
-    lineHeight: 18,
-    color: C.sub,
-    minHeight: 36,
+  homeRoof: {
+    width: 0,
+    height: 0,
+    borderLeftWidth: 9,
+    borderRightWidth: 9,
+    borderBottomWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
   },
-  tagRow: {
+  homeBody: {
+    width: 13,
+    height: 9,
+    borderWidth: 1.8,
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
+    marginTop: -1,
+  },
+  iconSquare: {
+    width: 18,
+    height: 18,
+    borderWidth: 1.8,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 1.5,
+  },
+  iconCircle: {
+    width: 18,
+    height: 18,
+    borderWidth: 1.8,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compassDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+  },
+  iconMore: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 10,
-    gap: 6,
+    height: 20,
+    alignItems: 'center',
   },
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    backgroundColor: '#1B2537',
-  },
-  tagText: {
-    fontFamily: FONT,
-    fontStyle: 'normal',
-    fontSize: 10,
-    color: C.mute,
+  moreDot: {
+    width: 3.5,
+    height: 3.5,
+    borderRadius: 2,
+    marginHorizontal: 1.4,
   },
 });
