@@ -34,8 +34,25 @@ const TABS = [
   { id: 'more', name: '更多', icon: 'more', sub: '' },
 ];
 
-const DATA_URL =
-  'https://cdn.jsdelivr.net/gh/xiaoye2026hello/xiaoye-app@main/data/software.json';
+const DATA_URLS = [
+  'https://raw.githubusercontent.com/xiaoye2026hello/xiaoye-app/main/data/software.json',
+  'https://cdn.jsdelivr.net/gh/xiaoye2026hello/xiaoye-app@main/data/software.json',
+];
+
+async function loadRemoteData() {
+  for (const url of DATA_URLS) {
+    try {
+      const r = await fetch(url, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+      });
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (Array.isArray(d.items)) return d;
+    } catch (e) {}
+  }
+  return null;
+}
 
 const DEFAULT_CATS = [{ id: 'all', name: '全部' }];
 const DEFAULT_APPS = [];
@@ -320,19 +337,16 @@ export default function App() {
   useEffect(() => {
     let alive = true;
     setLoading(true);
-    fetch(DATA_URL)
-      .then((r) => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+    loadRemoteData()
       .then((d) => {
         if (!alive) return;
+        if (!d) {
+          setSyncError(true);
+          return;
+        }
         if (Array.isArray(d.categories) && d.categories.length > 0) setCats(d.categories);
         if (Array.isArray(d.items)) setApps(d.items);
         setSyncError(false);
-      })
-      .catch(() => {
-        if (alive) setSyncError(true);
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -345,17 +359,16 @@ export default function App() {
   const onRefresh = () => {
     setRefreshing(true);
     const start = Date.now();
-    fetch(DATA_URL)
-      .then((r) => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+    loadRemoteData()
       .then((d) => {
+        if (!d) {
+          setSyncError(true);
+          return;
+        }
         if (Array.isArray(d.categories) && d.categories.length > 0) setCats(d.categories);
         if (Array.isArray(d.items)) setApps(d.items);
         setSyncError(false);
       })
-      .catch(() => setSyncError(true))
       .finally(() => {
         const wait = Math.max(0, 700 - (Date.now() - start));
         setTimeout(() => setRefreshing(false), wait);
