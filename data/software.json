@@ -12,6 +12,7 @@
   "items": [
     { "name": "Notion", "cat": "efficiency", "desc": "文档、表格、项目看板合一", "url": "https://www.notion.com" },
     { "name": "Obsidian", "cat": "efficiency", "desc": "本地优先的 Markdown 知识库", "url": "https://obsidian.md" },
+    { "name": "Raycast", "cat": "efficiency", "desc": "键盘唤起一切的启动器", "url": "https://www.raycast.com" },
     { "name": "VS Code", "cat": "dev", "desc": "可扩展的代码编辑器", "url": "https://code.visualstudio.com" },
     { "name": "Warp", "cat": "dev", "desc": "重新设计的现代终端", "url": "https://www.warp.dev" },
     { "name": "Figma", "cat": "design", "desc": "多人同时编辑的界面设计工具", "url": "https://www.figma.com" },
