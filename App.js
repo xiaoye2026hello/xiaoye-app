@@ -1,6 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 const FONT = Platform.select({
   ios: 'PingFang SC',
@@ -17,21 +25,11 @@ const PH = '#EDF1F6';
 const PH_LINE = '#DCE3EC';
 
 const TABS = [
-  { id: 'home', name: '首页', icon: 'home' },
-  { id: 'apps', name: '软件', icon: 'box' },
-  { id: 'find', name: '发现', icon: 'compass' },
-  { id: 'more', name: '更多', icon: 'more' },
+  { id: 'home', name: '首页', icon: 'home', sub: '欢迎使用小叶软件库，发现好用的工具！' },
+  { id: 'apps', name: '软件', icon: 'box', sub: '↓↓【不显示软件请下拉进行刷新】↓↓' },
+  { id: 'find', name: '发现', icon: 'compass', sub: '' },
+  { id: 'more', name: '更多', icon: 'more', sub: '' },
 ];
-
-function ShareIcon() {
-  return (
-    <View style={styles.shareIcon}>
-      <View style={styles.shareArrow} />
-      <View style={styles.shareStem} />
-      <View style={styles.shareTray} />
-    </View>
-  );
-}
 
 function TabIcon({ type, color }) {
   if (type === 'home') {
@@ -65,58 +63,132 @@ function TabIcon({ type, color }) {
   );
 }
 
-function Placeholder({ height, label }) {
+function SearchIcon() {
   return (
-    <View style={[styles.ph, { height }]}>
-      <Text style={styles.phLabel}>{label}</Text>
+    <View style={styles.searchBox}>
+      <View style={styles.searchRing} />
+      <View style={styles.searchHandle} />
     </View>
   );
 }
 
+function DownloadIcon() {
+  return (
+    <View style={styles.dlBox}>
+      <View style={styles.dlArrow} />
+      <View style={styles.dlStem} />
+      <View style={styles.dlBase} />
+    </View>
+  );
+}
+
+function HomeScreen({ width }) {
+  const pad = 16;
+  const gap = 12;
+  const colW = (width - pad * 2 - gap) / 2;
+  const bannerH = Math.round(Math.min(width * 0.44, 210));
+  const tileH = Math.round(colW * 0.62);
+
+  return (
+    <ScrollView
+      contentContainerStyle={[styles.sheetContent, { paddingHorizontal: pad }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={[styles.ph, { height: bannerH }]} />
+
+      <View style={styles.notice}>
+        <View style={styles.noticeTag}>
+          <Text style={styles.noticeTagText}>公告</Text>
+        </View>
+        <Text style={styles.noticeText} numberOfLines={1} />
+        <Text style={styles.chevron}>›</Text>
+      </View>
+
+      <Text style={styles.sectionTitle}>公告专区</Text>
+
+      <View style={[styles.grid, { gap }]}>
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <View key={i} style={[styles.ph, { width: colW, height: tileH }]} />
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+
+function AppsScreen({ width }) {
+  const pad = 16;
+  const rowH = Math.round(Math.min(width * 0.22, 92));
+  const iconSize = Math.round(rowH * 0.62);
+
+  return (
+    <View style={styles.flex}>
+      <View style={[styles.catBar, { paddingHorizontal: pad }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={[styles.catChip, styles.catChipOn]}>
+            <Text style={styles.catTextOn}>实用软件</Text>
+          </View>
+          <View style={styles.catChip} />
+          <View style={styles.catChip} />
+        </ScrollView>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={[styles.listContent, { paddingHorizontal: pad }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+          <View key={i} style={[styles.appRow, { height: rowH }]}>
+            <View
+              style={[
+                styles.appIcon,
+                { width: iconSize, height: iconSize, borderRadius: iconSize * 0.24 },
+              ]}
+            />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+function BlankScreen() {
+  return <View style={styles.blank} />;
+}
+
 export default function App() {
   const [tab, setTab] = useState('home');
+  const { width } = useWindowDimensions();
+  const current = TABS.find((t) => t.id === tab);
 
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
 
       <View style={styles.header}>
-        <View style={styles.deco1} />
-        <View style={styles.deco2} />
-        <Text style={styles.headerTitle}>首页</Text>
-        <Text style={styles.headerSub}>欢迎使用小七软件库，点击右上角可分享软件！</Text>
-        <Pressable style={styles.shareWrap} hitSlop={10}>
-          <ShareIcon />
-        </Pressable>
+        {tab === 'home' && (
+          <>
+            <View style={styles.deco1} />
+            <View style={styles.deco2} />
+          </>
+        )}
+        <Text style={styles.headerTitle}>{current.name}</Text>
+        {!!current.sub && <Text style={styles.headerSub}>{current.sub}</Text>}
+        {tab === 'apps' && (
+          <View style={styles.headerIcons}>
+            <Pressable hitSlop={10} style={styles.headerIconBtn}>
+              <SearchIcon />
+            </Pressable>
+            <Pressable hitSlop={10} style={styles.headerIconBtn}>
+              <DownloadIcon />
+            </Pressable>
+          </View>
+        )}
       </View>
 
       <View style={styles.sheet}>
-        <ScrollView
-          contentContainerStyle={styles.sheetContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <Placeholder height={180} label="Banner 图" />
-
-          <View style={styles.notice}>
-            <View style={styles.noticeTag}>
-              <Text style={styles.noticeTagText}>公告</Text>
-            </View>
-            <Text style={styles.noticeText} numberOfLines={1}>
-              此处为公告内容，待填写
-            </Text>
-            <Text style={styles.chevron}>›</Text>
-          </View>
-
-          <Text style={styles.sectionTitle}>公告专区</Text>
-
-          <View style={styles.grid}>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
-              <View key={i} style={styles.tile}>
-                <Placeholder height={104} label="" />
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+        {tab === 'home' && <HomeScreen width={width} />}
+        {tab === 'apps' && <AppsScreen width={width} />}
+        {(tab === 'find' || tab === 'more') && <BlankScreen />}
       </View>
 
       <View style={styles.tabbar}>
@@ -136,10 +208,8 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: BLUE,
-  },
+  root: { flex: 1, backgroundColor: BLUE },
+  flex: { flex: 1 },
   header: {
     backgroundColor: BLUE,
     paddingTop: Platform.select({ ios: 62, android: 42, default: 42 }),
@@ -179,53 +249,72 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: 'rgba(255,255,255,0.92)',
     lineHeight: 19,
-    paddingRight: 60,
+    paddingRight: 84,
   },
-  shareWrap: {
+  headerIcons: {
     position: 'absolute',
-    right: 18,
-    top: Platform.select({ ios: 54, android: 34, default: 34 }),
-    width: 34,
-    height: 34,
+    right: 14,
+    top: Platform.select({ ios: 52, android: 32, default: 32 }),
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIconBtn: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shareIcon: {
-    width: 20,
-    height: 20,
-  },
-  shareArrow: {
+  searchBox: { width: 22, height: 22 },
+  searchRing: {
     position: 'absolute',
-    top: 0,
-    left: 5,
+    top: 1,
+    left: 1,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  searchHandle: {
+    position: 'absolute',
+    right: 2,
+    bottom: 2,
+    width: 2,
+    height: 8,
+    borderRadius: 1,
+    backgroundColor: '#FFFFFF',
+    transform: [{ rotate: '-45deg' }],
+  },
+  dlBox: { width: 22, height: 22 },
+  dlArrow: {
+    position: 'absolute',
+    top: 8,
+    left: 4,
     width: 0,
     height: 0,
     borderLeftWidth: 5,
     borderRightWidth: 5,
-    borderBottomWidth: 6,
+    borderTopWidth: 6,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderBottomColor: '#FFFFFF',
+    borderTopColor: '#FFFFFF',
   },
-  shareStem: {
+  dlStem: {
     position: 'absolute',
-    top: 5,
-    left: 9,
+    top: 2,
+    left: 10,
     width: 2,
     height: 8,
     backgroundColor: '#FFFFFF',
   },
-  shareTray: {
+  dlBase: {
     position: 'absolute',
-    bottom: 0,
-    left: 2,
+    bottom: 1,
+    left: 3,
     width: 16,
-    height: 9,
-    borderWidth: 2,
-    borderTopWidth: 0,
-    borderColor: '#FFFFFF',
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: '#FFFFFF',
   },
   sheet: {
     flex: 1,
@@ -236,7 +325,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sheetContent: {
-    paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 24,
   },
@@ -245,14 +333,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: PH_LINE,
     borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phLabel: {
-    fontFamily: FONT,
-    fontStyle: 'normal',
-    fontSize: 12,
-    color: '#A9B4C2',
   },
   notice: {
     flexDirection: 'row',
@@ -305,11 +385,50 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
   },
-  tile: {
-    width: '48.5%',
-    marginBottom: 12,
+  catBar: {
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  catChip: {
+    height: 30,
+    minWidth: 58,
+    borderRadius: 8,
+    marginRight: 8,
+    backgroundColor: '#F1F4F8',
+  },
+  catChipOn: {
+    backgroundColor: BLUE,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  catTextOn: {
+    fontFamily: FONT,
+    fontStyle: 'normal',
+    fontSize: 12.5,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+  listContent: {
+    paddingBottom: 20,
+  },
+  appRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F7F9FB',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+  },
+  appIcon: {
+    backgroundColor: PH,
+    borderWidth: 1,
+    borderColor: PH_LINE,
+  },
+  blank: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   tabbar: {
     flexDirection: 'row',
@@ -363,11 +482,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  boxInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 1.5,
-  },
+  boxInner: { width: 6, height: 6, borderRadius: 1.5 },
   iconCircle: {
     width: 18,
     height: 18,
@@ -376,16 +491,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  compassDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-  },
-  iconMore: {
-    flexDirection: 'row',
-    height: 20,
-    alignItems: 'center',
-  },
+  compassDot: { width: 5, height: 5, borderRadius: 2.5 },
+  iconMore: { flexDirection: 'row', height: 20, alignItems: 'center' },
   moreDot: {
     width: 3.5,
     height: 3.5,
