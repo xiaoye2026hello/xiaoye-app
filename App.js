@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Linking,
   Platform,
@@ -34,7 +34,11 @@ const TABS = [
   { id: 'more', name: '更多', icon: 'more', sub: '' },
 ];
 
-const CATS = [{ id: 'all', name: '全部' }];
+const DATA_URL =
+  'https://cdn.jsdelivr.net/gh/xiaoye2026hello/xiaoye-app@main/data/software.json';
+
+const DEFAULT_CATS = [{ id: 'all', name: '全部' }];
+const DEFAULT_APPS = [];
 
 const CAT_COLOR = {
   efficiency: '#2F9CF7',
@@ -43,8 +47,6 @@ const CAT_COLOR = {
   system: '#2FBFA8',
   media: '#F5A524',
 };
-
-const APPS = [];
 
 function TabIcon({ type, color }) {
   if (type === 'home') {
@@ -172,21 +174,21 @@ function AppRow({ item, width, onGet }) {
   );
 }
 
-function AppsScreen({ width, keyword, cat, onCatChange, onRefresh, refreshing, onGet }) {
+function AppsScreen({ width, keyword, cat, cats, apps, loading, syncError, onCatChange, onRefresh, refreshing, onGet }) {
   const list = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
-    return APPS.filter((a) => {
+    return apps.filter((a) => {
       const okCat = cat === 'all' || a.cat === cat;
       const okKw = !kw || a.name.toLowerCase().includes(kw) || a.desc.toLowerCase().includes(kw);
       return okCat && okKw;
     });
-  }, [keyword, cat]);
+  }, [keyword, cat, apps]);
 
   return (
     <View style={styles.flex}>
       <View style={styles.catBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {CATS.map((c) => {
+          {cats.map((c) => {
             const on = c.id === cat;
             return (
               <Pressable
@@ -213,6 +215,16 @@ function AppsScreen({ width, keyword, cat, onCatChange, onRefresh, refreshing, o
           />
         }
       >
+        {loading && list.length === 0 && (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>正在同步软件列表…</Text>
+          </View>
+        )}
+        {!loading && syncError && list.length === 0 && (
+          <View style={styles.empty}>
+            <Text style={styles.emptyText}>同步失败，下拉重试</Text>
+          </View>
+        )}
         {list.map((item) => (
           <AppRow key={item.name} item={item} width={width} onGet={onGet} />
         ))}
@@ -300,9 +312,54 @@ export default function App() {
   const { width } = useWindowDimensions();
   const current = TABS.find((t) => t.id === tab);
 
+  const [cats, setCats] = useState(DEFAULT_CATS);
+  const [apps, setApps] = useState(DEFAULT_APPS);
+  const [loading, setLoading] = useState(true);
+  const [syncError, setSyncError] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    fetch(DATA_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then((d) => {
+        if (!alive) return;
+        if (Array.isArray(d.categories) && d.categories.length > 0) setCats(d.categories);
+        if (Array.isArray(d.items)) setApps(d.items);
+        setSyncError(false);
+      })
+      .catch(() => {
+        if (alive) setSyncError(true);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 900);
+    const start = Date.now();
+    fetch(DATA_URL)
+      .then((r) => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then((d) => {
+        if (Array.isArray(d.categories) && d.categories.length > 0) setCats(d.categories);
+        if (Array.isArray(d.items)) setApps(d.items);
+        setSyncError(false);
+      })
+      .catch(() => setSyncError(true))
+      .finally(() => {
+        const wait = Math.max(0, 700 - (Date.now() - start));
+        setTimeout(() => setRefreshing(false), wait);
+      });
   };
 
   const closeSearch = () => {
@@ -383,6 +440,10 @@ export default function App() {
             width={width}
             keyword={keyword}
             cat={cat}
+            cats={cats}
+            apps={apps}
+            loading={loading}
+            syncError={syncError}
             onCatChange={setCat}
             onRefresh={onRefresh}
             refreshing={refreshing}

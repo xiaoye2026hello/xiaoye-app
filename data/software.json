@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "updated": "2026-11-12",
+  "note": "改这个文件就能更新 App 里的软件列表，不需要重新打包。保存后等 1-2 分钟（CDN 缓存），App 重新打开即生效。",
+  "categories": [
+    { "id": "all", "name": "全部" },
+    { "id": "efficiency", "name": "效率" },
+    { "id": "dev", "name": "开发" },
+    { "id": "design", "name": "设计" },
+    { "id": "system", "name": "系统" }
+  ],
+  "items": [
+    { "name": "Notion", "cat": "efficiency", "desc": "文档、表格、项目看板合一", "url": "https://www.notion.com" },
+    { "name": "Obsidian", "cat": "efficiency", "desc": "本地优先的 Markdown 知识库", "url": "https://obsidian.md" },
+    { "name": "VS Code", "cat": "dev", "desc": "可扩展的代码编辑器", "url": "https://code.visualstudio.com" },
+    { "name": "Warp", "cat": "dev", "desc": "重新设计的现代终端", "url": "https://www.warp.dev" },
+    { "name": "Figma", "cat": "design", "desc": "多人同时编辑的界面设计工具", "url": "https://www.figma.com" },
+    { "name": "Rectangle", "cat": "system", "desc": "快捷把窗口摆到固定位置", "url": "https://rectangleapp.com" }
+  ]
+}
