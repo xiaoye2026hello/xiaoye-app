@@ -67,6 +67,27 @@ jobs:
           echo "org.gradle.parallel=true" >> gradle.properties
           echo "org.gradle.caching=true" >> gradle.properties
 
+      # Expo SDK 58 的 inline modules 任务会把 Gradle 传入的参数直接 JSON.parse，
+      # 而该参数在我们的项目里不可解析，导致 :expo:generateInlineModules 失败。
+      # 本项目没有内联模块，解析失败时回退为空数组即为正确结果。
+      - name: Patch inline modules parser
+        run: |
+          cat > /tmp/patch-autolinking.js <<'PATCH_EOF'
+          const fs = require('fs');
+          const p = 'node_modules/expo-modules-autolinking/build/commands/mirrorKotlinInlineModulesCommand.js';
+          let s = fs.readFileSync(p, 'utf8');
+          const from = 'const watchedDirectories = JSON.parse(watchedDirectoriesSerialized);';
+          const to = 'let watchedDirectories = []; try { watchedDirectories = JSON.parse(watchedDirectoriesSerialized); } catch (e) { console.warn("[patch] unusable inline modules arg: " + JSON.stringify(watchedDirectoriesSerialized)); }';
+          if (!s.includes(from)) {
+            console.log('target statement not found, skipping patch');
+            process.exit(0);
+          }
+          fs.writeFileSync(p, s.replace(from, to));
+          console.log('patch applied');
+          PATCH_EOF
+          node /tmp/patch-autolinking.js
+          grep -n "watchedDirectories = \[\]" node_modules/expo-modules-autolinking/build/commands/mirrorKotlinInlineModulesCommand.js
+
       - name: Build release APK
         run: |
           cd android
