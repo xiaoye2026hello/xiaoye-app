@@ -6,6 +6,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  StatusBar as RNStatusBar,
   StyleSheet,
   Text,
   TextInput,
@@ -18,6 +19,10 @@ const FONT = Platform.select({
   android: 'sans-serif',
   default: 'sans-serif',
 });
+
+// 安卓状态栏高度因机型而异（24~36dp），写死会多留白或被压住，
+// 这里按系统上报的真实高度加一点呼吸空间。
+const ANDROID_TOP = (RNStatusBar.currentHeight || 24) + 14;
 
 const BLUE = '#2F9CF7';
 const BLUE_SOFT = '#E8F3FF';
@@ -502,7 +507,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   header: {
     backgroundColor: BLUE,
-    paddingTop: Platform.select({ ios: 62, android: 42, default: 42 }),
+    paddingTop: Platform.select({ ios: 62, android: ANDROID_TOP, default: 42 }),
     paddingHorizontal: 20,
     paddingBottom: 56,
   },
@@ -544,7 +549,7 @@ const styles = StyleSheet.create({
   headerIcons: {
     position: 'absolute',
     right: 14,
-    top: Platform.select({ ios: 52, android: 32, default: 32 }),
+    top: Platform.select({ ios: 52, android: ANDROID_TOP - 10, default: 32 }),
     flexDirection: 'row',
     alignItems: 'center',
   },
